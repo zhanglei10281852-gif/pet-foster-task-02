@@ -86,16 +86,9 @@ func (s *Service) Register(ctx context.Context, username, password, phone, email
 	now := formatStoredTime(s.now())
 	result, err := s.store.db.ExecContext(ctx, `INSERT INTO pet_users(username,password_hash,phone,email,address,role,status,create_time,update_time) VALUES(?,?,?,?,?,'USER',1,?,?)`, username, string(hash), strings.TrimSpace(phone), strings.TrimSpace(email), "", now, now)
 	if err != nil {
-		message := strings.ToLower(err.Error())
-		if strings.Contains(message, "unique") {
-			return User{}, fmt.Errorf("register user conflict: %v", err)
-		}
-		return User{}, fmt.Errorf("register user: %v", err)
+		return User{}, translateServiceError(err)
 	}
 	id, err := result.LastInsertId()
-	if err == nil && id == 0 {
-		return User{}, errors.New("register user returned no id")
-	}
 	if err != nil {
 		return User{}, err
 	}
